@@ -557,11 +557,12 @@
     }
 
     .day-count {
-      font-size: 11px;
+      font-size: 12px;
       color: rgba(63, 44, 36, 0.76);
-      font-weight: 650;
+      font-weight: 760;
       font-variant-numeric: tabular-nums;
-      line-height: 1.25;
+      line-height: 1;
+      white-space: nowrap;
     }
 
     .note-dot {
@@ -1096,7 +1097,7 @@
         cell.setAttribute("aria-label", record.count > 0 ? `${day}日，烦了${record.count}次` : `${day}日，没有烦躁记录`);
         cell.innerHTML = [
           `<span class="day-number">${day}</span>`,
-          record.count > 0 ? `<span class="day-count">烦 ${record.count} 次</span>` : "",
+          record.count > 0 ? `<span class="day-count">×${record.count}</span>` : "",
           hasNote ? `<span class="note-dot" aria-hidden="true">记</span>` : ""
         ].join("");
         cell.addEventListener("click", () => openDetail(key));
@@ -1263,7 +1264,7 @@
       state.selectedKey = key;
       const day = getDay(key);
       els.detailTitle.textContent = formatDateKey(key);
-      els.detailCount.textContent = `当天烦躁次数：${day.count}次`;
+      els.detailCount.textContent = `当天烦躁次数：烦 ${day.count} 次`;
       els.detailStatus.textContent = `当天等级：${moodStatus(day.count)}`;
       els.detailNote.value = day.note;
       els.detailBackdrop.classList.add("show");
