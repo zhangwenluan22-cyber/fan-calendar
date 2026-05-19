@@ -1,0 +1,1426 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>烦烦日历</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fff3e4;
+      --panel: #fffaf2;
+      --panel-strong: #fff0da;
+      --ink: #3f2c24;
+      --muted: #8a6b5d;
+      --line: rgba(96, 59, 42, 0.16);
+      --accent: #ee735f;
+      --accent-dark: #c64f46;
+      --accent-soft: #ffd7c8;
+      --gold: #f2b84b;
+      --green: #8ab47a;
+      --shadow: 0 18px 50px rgba(96, 59, 42, 0.14);
+      --radius: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255, 214, 174, 0.7), transparent 34rem),
+        linear-gradient(180deg, #fff0dc 0%, #fff7ed 45%, #fff3e4 100%);
+    }
+
+    button,
+    textarea,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: max(16px, env(safe-area-inset-top)) 14px max(28px, env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 4px 6px;
+    }
+
+    .brand {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .date {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .settings-pill {
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 242, 0.72);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 9px 12px;
+      box-shadow: 0 8px 24px rgba(96, 59, 42, 0.08);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      margin-top: 12px;
+      padding: 22px 16px 20px;
+      border: 1px solid var(--line);
+      border-radius: 32px;
+      background: linear-gradient(180deg, rgba(255, 250, 242, 0.96), rgba(255, 240, 218, 0.92));
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .count-label {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .count-row {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 7px;
+      margin-top: 4px;
+      white-space: nowrap;
+    }
+
+    .count-number {
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--accent-dark);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .count-number.pop {
+      animation: number-pop 260ms ease-out;
+    }
+
+    .count-unit {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .mood-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      margin-top: 12px;
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--accent-dark);
+      font-weight: 800;
+    }
+
+    .button-zone {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 250px;
+      margin-top: 10px;
+    }
+
+    .fan-button {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: min(68vw, 260px);
+      height: min(68vw, 260px);
+      min-width: 210px;
+      min-height: 210px;
+      border: 0;
+      border-radius: 50%;
+      color: #fffdf8;
+      background:
+        radial-gradient(circle at 33% 27%, rgba(255, 255, 255, 0.42), transparent 24%),
+        linear-gradient(145deg, #ff9b7b 0%, #ee6e5d 48%, #b94442 100%);
+      box-shadow:
+        0 22px 42px rgba(198, 79, 70, 0.35),
+        inset 0 -12px 22px rgba(106, 39, 34, 0.24),
+        inset 0 12px 22px rgba(255, 255, 255, 0.22);
+      font-size: clamp(44px, 13vw, 74px);
+      font-weight: 950;
+      letter-spacing: 0;
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      transition: transform 140ms ease, filter 180ms ease, box-shadow 180ms ease;
+    }
+
+    .fan-button:active {
+      transform: scale(0.96);
+      filter: saturate(1.08);
+    }
+
+    .fan-button.shake {
+      animation: button-shake 260ms ease-out;
+    }
+
+    .button-glow {
+      position: absolute;
+      width: min(76vw, 292px);
+      height: min(76vw, 292px);
+      border-radius: 50%;
+      background: rgba(238, 115, 95, 0.12);
+      filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .bubble {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      padding: 8px 12px;
+      border: 1px solid rgba(198, 79, 70, 0.18);
+      border-radius: 999px;
+      color: var(--accent-dark);
+      background: rgba(255, 253, 248, 0.94);
+      box-shadow: 0 10px 24px rgba(96, 59, 42, 0.12);
+      font-weight: 800;
+      white-space: nowrap;
+      pointer-events: none;
+      animation: bubble-rise 980ms ease-out forwards;
+      transform: translate(-50%, -50%);
+    }
+
+    .hint {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .hint.swap {
+      animation: hint-swap 260ms ease-out;
+    }
+
+    .egg-card {
+      position: fixed;
+      left: 14px;
+      right: 14px;
+      top: max(16px, env(safe-area-inset-top));
+      z-index: 50;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 14px 46px 14px 16px;
+      border: 1px solid rgba(198, 79, 70, 0.22);
+      border-radius: 20px;
+      color: var(--ink);
+      background: rgba(255, 253, 248, 0.96);
+      box-shadow: 0 18px 54px rgba(96, 59, 42, 0.2);
+      font-weight: 800;
+      line-height: 1.45;
+      opacity: 0;
+      transform: translateY(-16px);
+      pointer-events: none;
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .egg-card.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .egg-close {
+      position: absolute;
+      right: 9px;
+      top: 9px;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 50%;
+      background: #fff0df;
+      color: var(--ink);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .card {
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 250, 242, 0.9);
+      box-shadow: 0 10px 30px rgba(96, 59, 42, 0.08);
+    }
+
+    .card-header,
+    .section-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .ghost-button,
+    .soft-button,
+    .danger-button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      min-height: 40px;
+      padding: 9px 13px;
+      color: var(--ink);
+      background: #fffaf2;
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    .soft-button {
+      background: var(--accent-soft);
+      border-color: rgba(198, 79, 70, 0.2);
+    }
+
+    .danger-button {
+      color: #8d302e;
+      background: #ffe6df;
+      border-color: rgba(198, 79, 70, 0.25);
+    }
+
+    .note-body {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .note-body.collapsed {
+      display: none;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 112px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px 14px;
+      color: var(--ink);
+      background: #fffdf8;
+      outline: none;
+      line-height: 1.55;
+    }
+
+    textarea:focus,
+    select:focus,
+    input:focus {
+      border-color: rgba(238, 115, 95, 0.55);
+      box-shadow: 0 0 0 4px rgba(238, 115, 95, 0.12);
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag-button {
+      border: 1px solid rgba(96, 59, 42, 0.12);
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: #fff2e2;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .setting-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-height: 44px;
+    }
+
+    .setting-line span {
+      font-weight: 750;
+    }
+
+    .switch {
+      position: relative;
+      width: 54px;
+      height: 32px;
+      flex: 0 0 auto;
+    }
+
+    .switch input {
+      position: absolute;
+      opacity: 0;
+      inset: 0;
+    }
+
+    .switch-ui {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: #e8d6c5;
+      transition: background 160ms ease;
+    }
+
+    .switch-ui::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 3px 10px rgba(96, 59, 42, 0.2);
+      transition: transform 160ms ease;
+    }
+
+    .switch input:checked + .switch-ui {
+      background: var(--accent);
+    }
+
+    .switch input:checked + .switch-ui::after {
+      transform: translateX(22px);
+    }
+
+    select {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 34px 0 12px;
+      color: var(--ink);
+      background: #fffdf8;
+    }
+
+    .calendar-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      gap: 8px;
+    }
+
+    .month-title {
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .month-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .calendar-filter {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(96, 59, 42, 0.1);
+      border-radius: 18px;
+      background: rgba(255, 253, 248, 0.68);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: #fffaf2;
+      color: var(--ink);
+      font-size: 20px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+      max-width: 620px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .weekdays {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .calendar-grid {
+      margin-top: 8px;
+    }
+
+    .calendar-grid.recorded-only {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      max-width: 520px;
+      gap: 10px;
+    }
+
+    .day-cell {
+      position: relative;
+      min-height: 48px;
+      border: 1px solid rgba(96, 59, 42, 0.08);
+      border-radius: 14px;
+      padding: 7px 6px 6px;
+      color: var(--ink);
+      background: #fffdf8;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 4px;
+      opacity: 0.72;
+    }
+
+    .day-cell.blank {
+      min-height: 48px;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    .day-cell.today {
+      border: 2px solid var(--accent-dark);
+      padding: 6px 5px;
+      opacity: 1;
+    }
+
+    .day-cell.has-record {
+      min-height: 56px;
+      border-color: rgba(198, 79, 70, 0.18);
+      box-shadow: 0 8px 18px rgba(96, 59, 42, 0.08);
+      opacity: 1;
+    }
+
+    .calendar-grid.recorded-only .day-cell {
+      min-height: 70px;
+      padding: 11px 12px;
+      border-radius: 18px;
+    }
+
+    .day-number {
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .day-count {
+      font-size: 11px;
+      color: rgba(63, 44, 36, 0.76);
+      font-weight: 650;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.25;
+    }
+
+    .note-dot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      display: grid;
+      place-items: center;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 999px;
+      color: #fffaf2;
+      background: rgba(63, 44, 36, 0.58);
+      font-size: 10px;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .empty-records {
+      grid-column: 1 / -1;
+      padding: 18px 12px;
+      border: 1px dashed rgba(96, 59, 42, 0.16);
+      border-radius: 18px;
+      color: var(--muted);
+      background: rgba(255, 253, 248, 0.7);
+      text-align: center;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .summary-item {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fffdf8;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .summary-value {
+      margin-top: 5px;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .data-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .local-note {
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(63, 44, 36, 0.28);
+      padding: 12px;
+    }
+
+    .sheet-backdrop.show {
+      display: flex;
+    }
+
+    .sheet {
+      width: min(100%, 680px);
+      max-height: min(86vh, 720px);
+      overflow: auto;
+      border-radius: 28px 28px 22px 22px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(46, 31, 25, 0.28);
+      padding: 16px;
+    }
+
+    .sheet-meta {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0;
+      padding: 12px;
+      border-radius: 18px;
+      background: #fff2e2;
+      font-weight: 800;
+    }
+
+    .sheet-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .hidden-file {
+      display: none;
+    }
+
+    @keyframes number-pop {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes button-shake {
+      0%, 100% { transform: translateX(0) rotate(0); }
+      20% { transform: translateX(-4px) rotate(-1.4deg); }
+      45% { transform: translateX(4px) rotate(1.2deg); }
+      70% { transform: translateX(-2px) rotate(-0.8deg); }
+    }
+
+    @keyframes bubble-rise {
+      0% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + 12px)) scale(0.9);
+      }
+      15% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--x, 0px)), calc(-50% - 112px)) scale(1.08);
+      }
+    }
+
+    @keyframes hint-swap {
+      0% { opacity: 0; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (min-width: 680px) {
+      .app {
+        padding-top: 24px;
+      }
+
+      .hero {
+        padding: 28px 22px 24px;
+      }
+
+      .data-actions {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .settings-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .setting-line.sound-select-line {
+        grid-column: span 2;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 1ms !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1 class="brand">烦烦日历</h1>
+        <div class="date" id="todayDate"></div>
+      </div>
+      <button class="settings-pill" id="jumpSettings" type="button">设置</button>
+    </header>
+
+    <section class="hero" aria-label="今日烦躁记录">
+      <div class="count-label">今天已烦</div>
+      <div class="count-row">
+        <span class="count-number" id="todayCount">0</span>
+        <span class="count-unit">次</span>
+      </div>
+      <div class="mood-status" id="todayStatus">今天还算平静</div>
+
+      <div class="button-zone" id="buttonZone">
+        <div class="button-glow" aria-hidden="true"></div>
+        <button class="fan-button" id="fanButton" type="button" aria-label="记录一次烦躁">烦</button>
+      </div>
+      <div class="hint" id="hintText">今天先放这里，不用写小作文。</div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>今天为什么烦</h2>
+        <button class="ghost-button" id="toggleNote" type="button">收起</button>
+      </div>
+      <div class="note-body" id="noteBody">
+        <textarea id="todayNote" placeholder="大概是因为什么烦？"></textarea>
+        <div class="tags" id="tagList" aria-label="快捷标签"></div>
+      </div>
+    </section>
+
+    <section class="card" id="settingsCard">
+      <div class="section-title-row">
+        <h2>小开关</h2>
+      </div>
+      <div class="settings-grid">
+        <label class="setting-line">
+          <span>震动反馈</span>
+          <span class="switch">
+            <input id="vibrateToggle" type="checkbox">
+            <span class="switch-ui"></span>
+          </span>
+        </label>
+        <label class="setting-line">
+          <span>反击音效</span>
+          <span class="switch">
+            <input id="soundToggle" type="checkbox">
+            <span class="switch-ui"></span>
+          </span>
+        </label>
+        <label class="setting-line sound-select-line">
+          <span>音效类型</span>
+          <select id="soundType" aria-label="音效类型">
+            <option value="bo">啵</option>
+            <option value="dong">咚</option>
+            <option value="pa">啪</option>
+            <option value="pu">噗</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title-row">
+        <h2>本月烦烦日历</h2>
+      </div>
+      <label class="calendar-filter">
+        <span>只看有记录日期</span>
+        <span class="switch">
+          <input id="recordedOnlyToggle" type="checkbox">
+          <span class="switch-ui"></span>
+        </span>
+      </label>
+      <div class="calendar-head">
+        <button class="icon-button" id="prevMonth" type="button" aria-label="上个月">‹</button>
+        <div class="month-title" id="monthTitle"></div>
+        <button class="icon-button" id="nextMonth" type="button" aria-label="下个月">›</button>
+      </div>
+      <div class="weekdays" id="weekdays" aria-hidden="true">
+        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+
+      <div class="summary-grid" id="summaryGrid"></div>
+    </section>
+
+    <section class="card">
+      <h2>数据管理</h2>
+      <p class="local-note">数据只保存在当前浏览器本地，不会上传。换浏览器、清缓存、无痕模式都会影响数据。</p>
+      <div class="data-actions">
+        <button class="soft-button" id="exportData" type="button">导出数据</button>
+        <button class="soft-button" id="importData" type="button">导入数据</button>
+        <button class="danger-button" id="clearAllData" type="button">清空全部数据</button>
+      </div>
+      <input class="hidden-file" id="importFile" type="file" accept="application/json,.json">
+    </section>
+  </main>
+
+  <div class="egg-card" id="eggCard" role="status" aria-live="polite">
+    <button class="egg-close" id="eggClose" type="button" aria-label="关闭提示">×</button>
+    <div id="eggText"></div>
+  </div>
+
+  <div class="sheet-backdrop" id="detailBackdrop" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <section class="sheet">
+      <div class="card-header">
+        <h2 id="detailTitle">当天详情</h2>
+        <button class="ghost-button" id="closeDetail" type="button">关闭</button>
+      </div>
+      <div class="sheet-meta">
+        <div id="detailCount"></div>
+        <div id="detailStatus"></div>
+      </div>
+      <textarea id="detailNote" placeholder="这天大概是因为什么烦？"></textarea>
+      <div class="sheet-actions">
+        <button class="soft-button" id="minusOne" type="button">少记一次</button>
+        <button class="danger-button" id="clearDay" type="button">清空当天</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const DATA_KEY = "fan-calendar:data:v1";
+    const SETTINGS_KEY = "fan-calendar:settings:v1";
+
+    const bubbleTexts = ["烦", "又烦了", "救命", "我忍", "不想干了", "已记录", "先放这里", "今天有点难", "啊啊啊", "别来烦我", "我真的会谢", "已爆炸"];
+    const MAX_BUBBLES = 20;
+    const hints = [
+      "收到，这一下先替你记着。",
+      "已记录，不用假装没事。",
+      "烦躁值 +1。",
+      "今天确实有点难。",
+      "没关系，先点了再说。",
+      "这一下不需要解释。",
+      "工作只是工作，你先活着。",
+      "忍不了一点也没关系。",
+      "你没有疯，是事情真的很多。",
+      "这一拳先打在空气上。",
+      "今天的烦已经具象化了。",
+      "先别反思，先记录。"
+    ];
+    const tags = ["工作太多", "沟通好累", "被打断", "返工", "流程混乱", "别人不靠谱", "不想上班", "身体累", "睡不够", "情绪低"];
+    const eggs = {
+      20: "今天开始有点烦了。",
+      60: "今天的烦已经不是错觉了。",
+      120: "建议离开工位三分钟，假装自己只是路过这个世界。",
+      200: "今天的烦已经具象化了。请喝水，深呼吸，暂时不要做重大决定。",
+      500: "系统检测到你今天非常不适合继续上班。虽然不能真的替你请假，但我支持你在心里下班。"
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const state = {
+      data: loadJson(DATA_KEY, {}),
+      settings: Object.assign({ vibrate: false, sound: false, soundType: "bo", recordedOnly: false }, loadJson(SETTINGS_KEY, {})),
+      viewDate: new Date(),
+      selectedKey: null,
+      audioContext: null,
+      eggTimer: null
+    };
+
+    const today = new Date();
+    const todayKey = toDateKey(today);
+
+    const els = {
+      todayDate: $("todayDate"),
+      todayCount: $("todayCount"),
+      todayStatus: $("todayStatus"),
+      fanButton: $("fanButton"),
+      buttonZone: $("buttonZone"),
+      hintText: $("hintText"),
+      toggleNote: $("toggleNote"),
+      noteBody: $("noteBody"),
+      todayNote: $("todayNote"),
+      tagList: $("tagList"),
+      vibrateToggle: $("vibrateToggle"),
+      soundToggle: $("soundToggle"),
+      soundType: $("soundType"),
+      recordedOnlyToggle: $("recordedOnlyToggle"),
+      monthTitle: $("monthTitle"),
+      weekdays: $("weekdays"),
+      calendarGrid: $("calendarGrid"),
+      summaryGrid: $("summaryGrid"),
+      detailBackdrop: $("detailBackdrop"),
+      detailTitle: $("detailTitle"),
+      detailCount: $("detailCount"),
+      detailStatus: $("detailStatus"),
+      detailNote: $("detailNote"),
+      eggCard: $("eggCard"),
+      eggText: $("eggText")
+    };
+
+    function loadJson(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem(DATA_KEY, JSON.stringify(state.data));
+    }
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+    }
+
+    function toDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function getDay(key) {
+      if (!state.data[key]) {
+        state.data[key] = { count: 0, note: "" };
+      }
+      state.data[key].count = Math.max(0, Number(state.data[key].count) || 0);
+      state.data[key].note = String(state.data[key].note || "");
+      return state.data[key];
+    }
+
+    function readDay(key) {
+      const day = state.data[key] || {};
+      return {
+        count: Math.max(0, Number(day.count) || 0),
+        note: String(day.note || "")
+      };
+    }
+
+    function formatDate(date) {
+      return new Intl.DateTimeFormat("zh-CN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "long"
+      }).format(date);
+    }
+
+    function formatDateKey(key) {
+      const [year, month, day] = key.split("-").map(Number);
+      return formatDate(new Date(year, month - 1, day));
+    }
+
+    function buttonText(count) {
+      if (count <= 20) return "烦";
+      if (count <= 60) return "很烦";
+      if (count <= 120) return "烦死了";
+      if (count <= 200) return "今天什么情况";
+      if (count <= 300) return "毁灭吧";
+      if (count <= 500) return "我真的会谢";
+      return "先别上班了";
+    }
+
+    function moodStatus(count) {
+      if (count === 0) return "今天还算平静";
+      if (count <= 20) return "微烦";
+      if (count <= 60) return "中烦";
+      if (count <= 120) return "大烦";
+      if (count <= 200) return "爆烦";
+      if (count <= 500) return "烦到发光";
+      return "烦到需要被供起来";
+    }
+
+    function heatColor(count) {
+      if (count <= 0) return "#fffdf8";
+      if (count <= 20) return "#fff0df";
+      if (count <= 60) return "#ffd4bf";
+      if (count <= 120) return "#ffa88d";
+      if (count <= 200) return "#ee735f";
+      return "#bd433f";
+    }
+
+    function heatTextColor(count) {
+      return count >= 201 ? "#fffaf2" : "var(--ink)";
+    }
+
+    function renderAll() {
+      renderToday();
+      renderCalendar();
+      renderSummary();
+    }
+
+    function renderToday() {
+      const day = getDay(todayKey);
+      els.todayDate.textContent = formatDate(today);
+      els.todayCount.textContent = day.count;
+      els.todayStatus.textContent = moodStatus(day.count);
+      els.fanButton.textContent = buttonText(day.count);
+      els.todayNote.value = day.note;
+    }
+
+    function renderTags() {
+      els.tagList.innerHTML = "";
+      tags.forEach((tag) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tag-button";
+        button.textContent = tag;
+        button.addEventListener("click", () => appendTag(tag));
+        els.tagList.appendChild(button);
+      });
+    }
+
+    function renderSettings() {
+      els.vibrateToggle.checked = Boolean(state.settings.vibrate);
+      els.soundToggle.checked = Boolean(state.settings.sound);
+      els.soundType.value = state.settings.soundType || "bo";
+      els.recordedOnlyToggle.checked = Boolean(state.settings.recordedOnly);
+    }
+
+    function renderCalendar() {
+      const year = state.viewDate.getFullYear();
+      const month = state.viewDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const startOffset = firstDay.getDay();
+      const recordedOnly = Boolean(state.settings.recordedOnly);
+
+      els.monthTitle.textContent = `${year}年${month + 1}月`;
+      els.calendarGrid.innerHTML = "";
+      els.calendarGrid.classList.toggle("recorded-only", recordedOnly);
+      els.weekdays.hidden = recordedOnly;
+
+      if (!recordedOnly) {
+        for (let i = 0; i < startOffset; i += 1) {
+          const blank = document.createElement("div");
+          blank.className = "day-cell blank";
+          els.calendarGrid.appendChild(blank);
+        }
+      }
+
+      let visibleCount = 0;
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const key = toDateKey(new Date(year, month, day));
+        const record = readDay(key);
+        if (recordedOnly && record.count <= 0) continue;
+        visibleCount += 1;
+        const cell = document.createElement("button");
+        cell.type = "button";
+        const hasNote = record.note.trim().length > 0;
+        cell.className = `day-cell${record.count > 0 ? " has-record" : ""}${hasNote ? " has-note" : ""}${key === todayKey ? " today" : ""}`;
+        cell.style.background = heatColor(record.count);
+        cell.style.color = heatTextColor(record.count);
+        cell.setAttribute("aria-label", record.count > 0 ? `${day}日，烦了${record.count}次` : `${day}日，没有烦躁记录`);
+        cell.innerHTML = [
+          `<span class="day-number">${day}</span>`,
+          record.count > 0 ? `<span class="day-count">烦 ${record.count} 次</span>` : "",
+          hasNote ? `<span class="note-dot" aria-hidden="true">记</span>` : ""
+        ].join("");
+        cell.addEventListener("click", () => openDetail(key));
+        els.calendarGrid.appendChild(cell);
+      }
+
+      if (recordedOnly && visibleCount === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-records";
+        empty.textContent = "这个月还没有烦躁记录。";
+        els.calendarGrid.appendChild(empty);
+      }
+    }
+
+    function renderSummary() {
+      const year = state.viewDate.getFullYear();
+      const month = state.viewDate.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      let total = 0;
+      let calmDays = 0;
+      let topKey = null;
+      let topCount = -1;
+
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const key = toDateKey(new Date(year, month, day));
+        const count = readDay(key).count;
+        total += count;
+        if (count === 0) calmDays += 1;
+        if (count > topCount) {
+          topCount = count;
+          topKey = key;
+        }
+      }
+
+      const average = daysInMonth ? (total / daysInMonth).toFixed(1) : "0.0";
+      const topText = topCount > 0 ? `${Number(topKey.slice(8, 10))}日，${topCount}次，${moodStatus(topCount)}` : "暂无特别烦的一天";
+      const items = [
+        ["本月总共", `${total}次`],
+        ["最烦的一天", topText],
+        ["平均每天", `${average}次`],
+        ["平静日", `${calmDays}天`]
+      ];
+
+      els.summaryGrid.innerHTML = items.map(([label, value]) => (
+        `<div class="summary-item"><div class="summary-label">${label}</div><div class="summary-value">${value}</div></div>`
+      )).join("");
+    }
+
+    function incrementToday() {
+      const day = getDay(todayKey);
+      day.count += 1;
+      saveData();
+      renderAll();
+      playFeedback(day.count);
+    }
+
+    function playFeedback(count) {
+      popNumber();
+      shakeButton();
+      spawnBubble();
+      showHint();
+      vibrate();
+      playSound();
+      if (eggs[count]) showEgg(eggs[count]);
+    }
+
+    function popNumber() {
+      els.todayCount.classList.remove("pop");
+      void els.todayCount.offsetWidth;
+      els.todayCount.classList.add("pop");
+    }
+
+    function shakeButton() {
+      els.fanButton.classList.remove("shake");
+      void els.fanButton.offsetWidth;
+      els.fanButton.classList.add("shake");
+    }
+
+    function spawnBubble() {
+      while (els.buttonZone.querySelectorAll(".bubble").length >= MAX_BUBBLES) {
+        els.buttonZone.querySelector(".bubble")?.remove();
+      }
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = pick(bubbleTexts);
+      bubble.style.setProperty("--x", `${Math.round(Math.random() * 120 - 60)}px`);
+      els.buttonZone.appendChild(bubble);
+      window.setTimeout(() => bubble.remove(), 1050);
+    }
+
+    function showHint() {
+      els.hintText.textContent = pick(hints);
+      els.hintText.classList.remove("swap");
+      void els.hintText.offsetWidth;
+      els.hintText.classList.add("swap");
+    }
+
+    function vibrate() {
+      if (state.settings.vibrate && "vibrate" in navigator) {
+        navigator.vibrate(20);
+      }
+    }
+
+    function getAudioContext() {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return null;
+      if (!state.audioContext) state.audioContext = new AudioCtor();
+      return state.audioContext;
+    }
+
+    function playSound() {
+      if (!state.settings.sound) return;
+      const context = getAudioContext();
+      if (!context) return;
+
+      const now = context.currentTime;
+      const osc = context.createOscillator();
+      const gain = context.createGain();
+      const type = state.settings.soundType || "bo";
+      const config = {
+        bo: { start: 360, end: 520, wave: "sine", duration: 0.09 },
+        dong: { start: 180, end: 120, wave: "sine", duration: 0.12 },
+        pa: { start: 520, end: 260, wave: "triangle", duration: 0.055 },
+        pu: { start: 220, end: 150, wave: "square", duration: 0.075 }
+      }[type];
+
+      osc.type = config.wave;
+      osc.frequency.setValueAtTime(config.start, now);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(80, config.end), now + config.duration);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.08, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + config.duration);
+      osc.connect(gain);
+      gain.connect(context.destination);
+      osc.start(now);
+      osc.stop(now + config.duration + 0.02);
+    }
+
+    function showEgg(text) {
+      window.clearTimeout(state.eggTimer);
+      els.eggText.textContent = text;
+      els.eggCard.classList.add("show");
+      state.eggTimer = window.setTimeout(hideEgg, 5200);
+    }
+
+    function hideEgg() {
+      els.eggCard.classList.remove("show");
+    }
+
+    function appendTag(tag) {
+      const day = getDay(todayKey);
+      const prefix = day.note.trim() ? "，" : "";
+      day.note = `${day.note.trim()}${prefix}${tag}`;
+      saveData();
+      renderToday();
+      els.todayNote.focus();
+    }
+
+    function pick(list) {
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function openDetail(key) {
+      state.selectedKey = key;
+      const day = getDay(key);
+      els.detailTitle.textContent = formatDateKey(key);
+      els.detailCount.textContent = `当天烦躁次数：${day.count}次`;
+      els.detailStatus.textContent = `当天等级：${moodStatus(day.count)}`;
+      els.detailNote.value = day.note;
+      els.detailBackdrop.classList.add("show");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeDetail() {
+      els.detailBackdrop.classList.remove("show");
+      document.body.style.overflow = "";
+      state.selectedKey = null;
+    }
+
+    function refreshDetail() {
+      if (state.selectedKey) openDetail(state.selectedKey);
+    }
+
+    function exportData() {
+      const payload = {
+        app: "fan-calendar",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data: state.data,
+        settings: state.settings
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `fan-calendar-${toDateKey(new Date())}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result || "{}"));
+          const nextData = parsed.data && typeof parsed.data === "object" ? parsed.data : parsed;
+          if (!nextData || typeof nextData !== "object") throw new Error("bad data");
+          if (!confirm("导入会合并同日期数据，并覆盖同日期备注。继续吗？")) return;
+          Object.keys(nextData).forEach((key) => {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return;
+            state.data[key] = {
+              count: Math.max(0, Number(nextData[key].count) || 0),
+              note: String(nextData[key].note || "")
+            };
+          });
+          if (parsed.settings && typeof parsed.settings === "object") {
+            state.settings = Object.assign(state.settings, {
+              vibrate: Boolean(parsed.settings.vibrate),
+              sound: Boolean(parsed.settings.sound),
+              soundType: ["bo", "dong", "pa", "pu"].includes(parsed.settings.soundType) ? parsed.settings.soundType : state.settings.soundType,
+              recordedOnly: Boolean(parsed.settings.recordedOnly)
+            });
+            saveSettings();
+            renderSettings();
+          }
+          saveData();
+          renderAll();
+          alert("导入完成。");
+        } catch (error) {
+          alert("导入失败，请确认这是之前导出的 JSON 文件。");
+        } finally {
+          $("importFile").value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function bindEvents() {
+      els.fanButton.addEventListener("click", incrementToday);
+      $("jumpSettings").addEventListener("click", () => $("settingsCard").scrollIntoView({ behavior: "smooth", block: "start" }));
+      els.toggleNote.addEventListener("click", () => {
+        const collapsed = els.noteBody.classList.toggle("collapsed");
+        els.toggleNote.textContent = collapsed ? "展开" : "收起";
+      });
+      els.todayNote.addEventListener("input", () => {
+        getDay(todayKey).note = els.todayNote.value;
+        saveData();
+        renderCalendar();
+      });
+      els.vibrateToggle.addEventListener("change", () => {
+        state.settings.vibrate = els.vibrateToggle.checked;
+        saveSettings();
+      });
+      els.soundToggle.addEventListener("change", () => {
+        state.settings.sound = els.soundToggle.checked;
+        saveSettings();
+        if (state.settings.sound) playSound();
+      });
+      els.soundType.addEventListener("change", () => {
+        state.settings.soundType = els.soundType.value;
+        saveSettings();
+        if (state.settings.sound) playSound();
+      });
+      els.recordedOnlyToggle.addEventListener("change", () => {
+        state.settings.recordedOnly = els.recordedOnlyToggle.checked;
+        saveSettings();
+        renderCalendar();
+      });
+      $("prevMonth").addEventListener("click", () => {
+        state.viewDate = new Date(state.viewDate.getFullYear(), state.viewDate.getMonth() - 1, 1);
+        renderAll();
+      });
+      $("nextMonth").addEventListener("click", () => {
+        state.viewDate = new Date(state.viewDate.getFullYear(), state.viewDate.getMonth() + 1, 1);
+        renderAll();
+      });
+      $("closeDetail").addEventListener("click", closeDetail);
+      els.detailBackdrop.addEventListener("click", (event) => {
+        if (event.target === els.detailBackdrop) closeDetail();
+      });
+      els.detailNote.addEventListener("input", () => {
+        if (!state.selectedKey) return;
+        getDay(state.selectedKey).note = els.detailNote.value;
+        saveData();
+        if (state.selectedKey === todayKey) renderToday();
+        renderCalendar();
+      });
+      $("minusOne").addEventListener("click", () => {
+        if (!state.selectedKey) return;
+        const day = getDay(state.selectedKey);
+        day.count = Math.max(0, day.count - 1);
+        saveData();
+        renderAll();
+        refreshDetail();
+      });
+      $("clearDay").addEventListener("click", () => {
+        if (!state.selectedKey) return;
+        if (!confirm("确定清空这一天的次数和备注吗？")) return;
+        state.data[state.selectedKey] = { count: 0, note: "" };
+        saveData();
+        renderAll();
+        refreshDetail();
+      });
+      $("eggClose").addEventListener("click", hideEgg);
+      $("exportData").addEventListener("click", exportData);
+      $("importData").addEventListener("click", () => $("importFile").click());
+      $("importFile").addEventListener("change", (event) => importData(event.target.files[0]));
+      $("clearAllData").addEventListener("click", () => {
+        if (!confirm("确定要清空全部烦烦数据吗？")) return;
+        if (!confirm("再确认一次：清空后只能靠之前导出的文件恢复。继续吗？")) return;
+        state.data = {};
+        saveData();
+        renderAll();
+        alert("已清空。");
+      });
+    }
+
+    renderTags();
+    renderSettings();
+    bindEvents();
+    renderAll();
+  </script>
+</body>
+</html>
